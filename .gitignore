@@ -1,0 +1,21 @@
+# Dependencies and build output
+node_modules
+dist
+coverage
+
+# Secrets: never commit real env files, only the example
+.env
+.env.*
+!.env.example
+
+# Supabase local state
+supabase/.temp
+supabase/.branches
+
+# Logs and OS / editor files
+*.log
+.DS_Store
+.idea
+.vscode
+.venv
+.claude/settings.local.json

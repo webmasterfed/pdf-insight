@@ -1,0 +1,4 @@
+# Store all text files with LF line endings so Prettier behaves the same on Windows and CI.
+* text=auto eol=lf
+*.pdf binary
+*.png binary
