@@ -10,7 +10,7 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "tsc -b",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "check-secrets": "node scripts/check-secrets.mjs",
     "check-secrets:history": "node scripts/check-secrets.mjs --history"
   },
