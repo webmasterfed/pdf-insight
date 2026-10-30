@@ -7,8 +7,15 @@ import { execSync } from 'node:child_process';
 const PATTERNS = [
   { name: 'Google API key', regex: /AIza[0-9A-Za-z_-]{20,}/ },
   { name: 'OpenAI-style key', regex: /sk-[0-9A-Za-z_-]{20,}/ },
+  // Also catches the legacy Supabase service-role key, which is a JWT.
   { name: 'JWT-like token', regex: /eyJ[0-9A-Za-z_-]{20,}\.[0-9A-Za-z_-]{20,}/ },
-  { name: 'Supabase service role', regex: /service_role/i },
+  { name: 'Supabase secret key', regex: /sb_secret_[0-9A-Za-z_-]{16,}/ },
+  // The role name "service_role" (SQL grants, env variable names) is not a secret; a value
+  // assigned to a service-role variable is.
+  {
+    name: 'Assigned service role key',
+    regex: /SERVICE_ROLE_KEY\s*[=:]\s*['"]?[0-9A-Za-z._-]{20,}/i,
+  },
   { name: 'Assigned API key', regex: /API_KEY\s*=\s*['"]?[^\s'"#]{8,}/ },
 ];
 
