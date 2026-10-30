@@ -1,6 +1,7 @@
 // Vite copies the worker file into the build and gives us its final URL (including the
 // /pdf-insight/ base), so pdf.js can start its worker on GitHub Pages too.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { pageTextFromItems, readTextItems } from './pdfText.ts';
 
 // A page with fewer letters or digits than this has no usable text layer (scan or blank page).
 export const MIN_PAGE_CHARACTERS = 20;
@@ -65,12 +66,8 @@ export async function extractPdfText(data: ArrayBuffer): Promise<ExtractedPdf> {
     const pageTexts: string[] = [];
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
       const page = await pdf.getPage(pageNumber);
-      const content = await page.getTextContent();
-      // Items without "str" are marked-content markers, not text.
-      const pageText = content.items
-        .map((item) => ('str' in item ? item.str + (item.hasEOL ? '\n' : '') : ''))
-        .join('');
-      pageTexts.push(pageText.trim());
+      const items = await readTextItems(page.streamTextContent().getReader());
+      pageTexts.push(pageTextFromItems(items));
     }
 
     const pagesWithoutText = findPagesWithoutText(pageTexts);
