@@ -111,6 +111,64 @@ body {
   margin-top: 1rem;
 }
 
+.button--secondary {
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.button--secondary:hover {
+  background: #eef2ff;
+}
+
+.ai-notice {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--color-focus);
+  border-radius: 4px;
+  background: #fffbeb;
+  font-size: 0.9rem;
+}
+
+.loading-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.json-preview {
+  max-height: 32rem;
+  overflow: auto;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+}
+
+.error-state,
 .status--error {
   padding: 0.75rem 1rem;
   border-left: 4px solid var(--color-error);

@@ -1,59 +1,126 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { AnalysisApiError, requestAnalysis } from './api/analyze.ts';
+import { ERROR_MESSAGES } from './api/errorMessages.ts';
+import { AiNotice } from './components/AiNotice.tsx';
+import { ErrorState } from './components/ErrorState.tsx';
+import { JsonPreview } from './components/JsonPreview.tsx';
+import { LoadingState } from './components/LoadingState.tsx';
 import { UploadArea } from './components/UploadArea.tsx';
 import { extractPdfText, PdfError } from './lib/extractText.ts';
 import { validateFile } from './lib/validateFile.ts';
+import type { AnalyzeRequest } from '../supabase/functions/_shared/api.ts';
+import type { AnalysisResult } from '../supabase/functions/_shared/schema.ts';
 
 type AppState =
-  | { status: 'idle' }
+  | { status: 'idle'; notice: string | null }
   | { status: 'extracting'; fileName: string }
-  | { status: 'extracted'; fileName: string; pages: number; characters: number }
-  | { status: 'error'; message: string };
+  | { status: 'analyzing'; fileName: string }
+  | { status: 'done'; result: AnalysisResult }
+  // "request" is kept when the text was already extracted, so a retry skips the PDF step.
+  | { status: 'error'; message: string; request: AnalyzeRequest | null };
 
 export function App() {
-  const [state, setState] = useState<AppState>({ status: 'idle' });
+  const [state, setState] = useState<AppState>({ status: 'idle', notice: null });
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  async function analyze(request: AnalyzeRequest) {
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    setState({ status: 'analyzing', fileName: request.fileName });
+    try {
+      const result = await requestAnalysis(request, controller.signal);
+      setState({ status: 'done', result });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        setState({ status: 'idle', notice: 'Analiza została anulowana.' });
+        return;
+      }
+      const code = error instanceof AnalysisApiError ? error.code : 'internal_error';
+      setState({ status: 'error', message: ERROR_MESSAGES[code], request });
+    } finally {
+      abortControllerRef.current = null;
+    }
+  }
 
   async function handleFile(file: File) {
     const validation = await validateFile(file);
     if (!validation.ok) {
-      setState({ status: 'error', message: validation.message });
+      setState({ status: 'error', message: validation.message, request: null });
       return;
     }
 
     setState({ status: 'extracting', fileName: file.name });
+    let request: AnalyzeRequest;
     try {
       const { text, pages } = await extractPdfText(await file.arrayBuffer());
-      setState({ status: 'extracted', fileName: file.name, pages, characters: text.length });
+      request = { text, fileName: file.name, pages };
     } catch (error) {
       const message = error instanceof PdfError ? error.message : new PdfError('unknown').message;
-      setState({ status: 'error', message });
+      setState({ status: 'error', message, request: null });
+      return;
     }
+    await analyze(request);
   }
+
+  const isBusy = state.status === 'extracting' || state.status === 'analyzing';
+  const retryRequest = state.status === 'error' ? state.request : null;
 
   return (
     <main className="container">
       <h1>PDF Insight</h1>
       <p>Wgraj dokument PDF, a AI przygotuje streszczenie i dane w formacie JSON.</p>
 
-      <UploadArea
-        disabled={state.status === 'extracting'}
-        onFileSelected={(file) => {
-          void handleFile(file);
-        }}
-      />
+      {state.status !== 'done' && (
+        <>
+          <UploadArea
+            disabled={isBusy}
+            onFileSelected={(file) => {
+              void handleFile(file);
+            }}
+          />
+          <AiNotice />
+        </>
+      )}
 
       <div aria-live="polite" className="status">
-        {state.status === 'extracting' && <p>Odczytywanie tekstu z pliku {state.fileName}…</p>}
-        {state.status === 'extracted' && (
-          <p>
-            Odczytano {state.fileName}: stron {state.pages}, znaków {state.characters}.
-          </p>
+        {state.status === 'idle' && state.notice && <p>{state.notice}</p>}
+        {state.status === 'extracting' && (
+          <LoadingState message={`Odczytywanie tekstu z pliku ${state.fileName}…`} />
+        )}
+        {state.status === 'analyzing' && (
+          <LoadingState
+            message={`Analiza dokumentu ${state.fileName} przez AI… To zwykle trwa kilka sekund.`}
+            onCancel={() => abortControllerRef.current?.abort()}
+          />
         )}
         {state.status === 'error' && (
-          <p role="alert" className="status--error">
-            {state.message}
-          </p>
+          <ErrorState
+            message={state.message}
+            onRetry={
+              retryRequest
+                ? () => {
+                    void analyze(retryRequest);
+                  }
+                : null
+            }
+          />
         )}
       </div>
+
+      {state.status === 'done' && (
+        <>
+          <button
+            type="button"
+            className="button"
+            onClick={() => {
+              setState({ status: 'idle', notice: null });
+            }}
+          >
+            Nowy dokument
+          </button>
+          <JsonPreview result={state.result} />
+        </>
+      )}
     </main>
   );
 }
