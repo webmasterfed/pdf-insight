@@ -1,0 +1,57 @@
+/* Dark mode: follows the operating system setting and only swaps the design tokens.
+   Every text pair is measured at 4.5:1 or better and UI parts at 3:1 or better. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-text: #e6eaf2;
+    --color-muted: #a7b0c0;
+    --color-bg: #0b1120;
+    --color-surface: #131c2e;
+    --color-border: #2a3550;
+    --color-border-strong: #6b7896;
+    --color-primary: #2563eb;
+    --color-primary-dark: #1d4ed8;
+    --color-primary-light: #1a2747;
+    --color-primary-text: #93b4ff;
+    --color-accent-text: #c7d6ff;
+    --color-error: #fca5a5;
+    --color-error-bg: #2a1215;
+    --color-warning-text: #fcd9a6;
+    --color-warning-bg: #2a2010;
+    --color-accent: #f59e0b;
+    --color-focus: #fb923c;
+    --color-success: #4ade80;
+    --color-code-bg: #060b16;
+    --color-code-text: #e2e8f0;
+    --color-tile-bg: #0f1727;
+    --gradient-top: #13203f;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-md: 0 1px 3px rgb(0 0 0 / 45%), 0 4px 12px rgb(0 0 0 / 30%);
+  }
+
+  .badge--umowa {
+    --badge-text: #c7d6ff;
+    --badge-bg: #1a2747;
+  }
+
+  .badge--faktura {
+    --badge-text: #fed7aa;
+    --badge-bg: #3a2410;
+  }
+
+  .badge--oferta {
+    --badge-text: #bbf7d0;
+    --badge-bg: #11301d;
+  }
+
+  .badge--raport {
+    --badge-text: #e9d5ff;
+    --badge-bg: #2b1840;
+  }
+
+  .badge--inne {
+    --badge-text: #e5e7eb;
+    --badge-bg: #1f2937;
+  }
+}
