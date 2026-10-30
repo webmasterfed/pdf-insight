@@ -109,6 +109,13 @@ describe('analysisResultSchema', () => {
     expect(parse({ ...validResult(), keyPoints }).success).toBe(false);
   });
 
+  it('accepts 20 amounts and rejects 21', () => {
+    const amount = { value: 100, currency: 'PLN', context: 'opłata' };
+    const amounts = (count: number) => Array.from({ length: count }, () => amount);
+    expect(parse({ ...validResult(), amounts: amounts(20) }).success).toBe(true);
+    expect(parse({ ...validResult(), amounts: amounts(21) }).success).toBe(false);
+  });
+
   it('rejects a non-numeric amount value', () => {
     const amounts = [{ value: '12 500,00', currency: 'PLN', context: 'wynagrodzenie' }];
     expect(parse({ ...validResult(), amounts }).success).toBe(false);
