@@ -1,0 +1,73 @@
+/* Date on the left, label on the right, joined by a thin vertical line with dots. */
+.timeline {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-2) var(--space-5);
+}
+
+.card .timeline li + li {
+  margin-top: 0;
+}
+
+/* The connecting line. */
+.timeline li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.45rem;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.timeline li:first-child::before {
+  top: 50%;
+}
+
+.timeline li:last-child::before {
+  bottom: 50%;
+}
+
+.timeline li:only-child::before {
+  display: none;
+}
+
+/* The dot. */
+.timeline li::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--space-2) + 0.4rem);
+  left: 0.2rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 2px solid var(--color-primary-text);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.timeline time,
+.timeline__no-date {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline__no-date {
+  color: var(--color-muted);
+}
+
+/* Stacked on narrow screens: date above its label. */
+@media (max-width: 480px) {
+  .timeline li {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

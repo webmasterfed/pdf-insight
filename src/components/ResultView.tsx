@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import type { AnalysisResult } from '../../supabase/functions/_shared/schema.ts';
 import { downloadResultAsJson } from '../lib/download.ts';
-import { formatAmount, formatDocumentType, formatIsoDate, formatLanguage } from '../lib/format.ts';
+import { AmountsByCurrency } from './AmountsByCurrency.tsx';
+import { DatesTimeline } from './DatesTimeline.tsx';
 import { JsonPreview } from './JsonPreview.tsx';
+import { OverviewTiles } from './OverviewTiles.tsx';
 
 type ResultViewProps = {
   result: AnalysisResult;
@@ -27,9 +29,17 @@ function TextList({ items }: { items: string[] }) {
   );
 }
 
+function SuccessCheck() {
+  return (
+    <svg className="success-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="11" />
+      <path d="M7 12.5l3.2 3.2L17 9" />
+    </svg>
+  );
+}
+
 export function ResultView({ result, warning, onNewDocument }: ResultViewProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const { document: info } = result;
 
   // Moves keyboard and screen-reader focus to the results as soon as they appear.
   useEffect(() => {
@@ -39,9 +49,12 @@ export function ResultView({ result, warning, onNewDocument }: ResultViewProps) 
   return (
     <section className="result" aria-labelledby="result-title">
       <div className="result__header">
-        <h2 id="result-title" ref={headingRef} tabIndex={-1}>
-          Wyniki analizy
-        </h2>
+        <div className="result__title">
+          <SuccessCheck />
+          <h2 id="result-title" ref={headingRef} tabIndex={-1}>
+            Wyniki analizy
+          </h2>
+        </div>
         <div className="actions">
           <button
             type="button"
@@ -64,21 +77,7 @@ export function ResultView({ result, warning, onNewDocument }: ResultViewProps) 
         </p>
       )}
 
-      <div className="card">
-        <h3>{info.title ?? info.fileName}</h3>
-        <dl className="facts">
-          <dt>Typ</dt>
-          <dd>{formatDocumentType(info.type)}</dd>
-          <dt>Data dokumentu</dt>
-          <dd>{formatIsoDate(info.date)}</dd>
-          <dt>Język</dt>
-          <dd>{formatLanguage(info.language)}</dd>
-          <dt>Strony</dt>
-          <dd>{info.pages}</dd>
-          <dt>Plik</dt>
-          <dd className="break">{info.fileName}</dd>
-        </dl>
-      </div>
+      <OverviewTiles document={result.document} />
 
       <div className="card">
         <h3>Streszczenie</h3>
@@ -106,51 +105,13 @@ export function ResultView({ result, warning, onNewDocument }: ResultViewProps) 
         {result.amounts.length === 0 ? (
           <EmptyHint />
         ) : (
-          <div className="table-scroll" tabIndex={0} role="region" aria-label="Tabela kwot">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Kwota</th>
-                  <th scope="col">Kontekst</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.amounts.map((amount, index) => (
-                  <tr key={`${String(index)}-${String(amount.value)}`}>
-                    <td className="nowrap">{formatAmount(amount.value, amount.currency)}</td>
-                    <td>{amount.context}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AmountsByCurrency amounts={result.amounts} />
         )}
       </div>
 
       <div className="card">
         <h3>Daty</h3>
-        {result.dates.length === 0 ? (
-          <EmptyHint />
-        ) : (
-          <div className="table-scroll" tabIndex={0} role="region" aria-label="Tabela dat">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Data</th>
-                  <th scope="col">Kontekst</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.dates.map((entry, index) => (
-                  <tr key={`${String(index)}-${entry.date ?? 'brak'}`}>
-                    <td className="nowrap">{formatIsoDate(entry.date)}</td>
-                    <td>{entry.context}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {result.dates.length === 0 ? <EmptyHint /> : <DatesTimeline dates={result.dates} />}
       </div>
 
       <div className="card">
