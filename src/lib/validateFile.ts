@@ -37,7 +37,13 @@ export async function validateFile(file: File): Promise<ValidationResult> {
   if (!infoResult.ok) {
     return infoResult;
   }
-  const header = new Uint8Array(await file.slice(0, PDF_SIGNATURE.length).arrayBuffer());
+  let header: Uint8Array;
+  try {
+    header = new Uint8Array(await file.slice(0, PDF_SIGNATURE.length).arrayBuffer());
+  } catch {
+    // E.g. a cloud file that is no longer available on the device.
+    return { ok: false, message: 'Nie udało się odczytać pliku. Wybierz go ponownie.' };
+  }
   if (!hasPdfSignature(header)) {
     return { ok: false, message: 'Plik nie jest prawidłowym dokumentem PDF.' };
   }

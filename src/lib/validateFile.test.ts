@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { hasPdfSignature, MAX_FILE_SIZE_BYTES, validateFileInfo } from './validateFile.ts';
+import {
+  hasPdfSignature,
+  MAX_FILE_SIZE_BYTES,
+  validateFile,
+  validateFileInfo,
+} from './validateFile.ts';
 import { countMeaningfulCharacters } from './extractText.ts';
 
 describe('validateFileInfo', () => {
@@ -43,5 +48,25 @@ describe('hasPdfSignature', () => {
 describe('countMeaningfulCharacters', () => {
   it('counts letters (including Polish) and digits, ignoring spaces and punctuation', () => {
     expect(countMeaningfulCharacters('Zażółć 12 . - \n')).toBe(8);
+  });
+});
+
+describe('validateFile', () => {
+  it('returns a clear message when the file cannot be read', async () => {
+    const unreadable = new File(['%PDF-1.7'], 'umowa.pdf', { type: 'application/pdf' });
+    unreadable.slice = () => {
+      const blob = new Blob();
+      blob.arrayBuffer = () => Promise.reject(new DOMException('Not readable', 'NotReadableError'));
+      return blob;
+    };
+    expect(await validateFile(unreadable)).toEqual({
+      ok: false,
+      message: 'Nie udało się odczytać pliku. Wybierz go ponownie.',
+    });
+  });
+
+  it('accepts a real PDF header', async () => {
+    const pdf = new File(['%PDF-1.7 rest'], 'umowa.pdf', { type: 'application/pdf' });
+    expect(await validateFile(pdf)).toEqual({ ok: true });
   });
 });
