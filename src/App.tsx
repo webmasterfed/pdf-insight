@@ -4,10 +4,18 @@ import { ERROR_MESSAGES } from './api/errorMessages.ts';
 import { AiNotice } from './components/AiNotice.tsx';
 import { EmptyState } from './components/EmptyState.tsx';
 import { ErrorState } from './components/ErrorState.tsx';
+import { HistoryList } from './components/HistoryList.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
 import { ResultView } from './components/ResultView.tsx';
 import { UploadArea } from './components/UploadArea.tsx';
 import { extractPdfText, PdfError } from './lib/extractText.ts';
+import {
+  addToHistory,
+  clearHistory,
+  getBrowserStorage,
+  loadHistory,
+  type HistoryEntry,
+} from './lib/history.ts';
 import { formatPagesWithoutTextWarning } from './lib/pageWarning.ts';
 import { validateFile } from './lib/validateFile.ts';
 import type { AnalyzeRequest } from '../supabase/functions/_shared/api.ts';
@@ -21,8 +29,11 @@ type AppState =
   // "request" is kept when the text was already extracted, so a retry skips the PDF step.
   | { status: 'error'; message: string; request: AnalyzeRequest | null };
 
+const storage = getBrowserStorage();
+
 export function App() {
   const [state, setState] = useState<AppState>({ status: 'idle', notice: null });
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory(storage));
   const abortControllerRef = useRef<AbortController | null>(null);
 
   async function analyze(request: AnalyzeRequest) {
@@ -32,6 +43,14 @@ export function App() {
     try {
       const result = await requestAnalysis(request, controller.signal);
       setState({ status: 'done', result, pagesWithoutText: request.pagesWithoutText });
+      setHistory(
+        addToHistory(storage, history, {
+          id: crypto.randomUUID(),
+          savedAt: new Date().toISOString(),
+          result,
+          pagesWithoutText: request.pagesWithoutText,
+        }),
+      );
     } catch (error) {
       if (controller.signal.aborted) {
         setState({ status: 'idle', notice: 'Analiza została anulowana.' });
@@ -113,6 +132,23 @@ export function App() {
           />
         )}
       </div>
+
+      {(state.status === 'idle' || state.status === 'error') && (
+        <HistoryList
+          entries={history}
+          onOpen={(entry) => {
+            setState({
+              status: 'done',
+              result: entry.result,
+              pagesWithoutText: entry.pagesWithoutText,
+            });
+          }}
+          onClear={() => {
+            clearHistory(storage);
+            setHistory([]);
+          }}
+        />
+      )}
 
       {state.status === 'done' && (
         <ResultView
