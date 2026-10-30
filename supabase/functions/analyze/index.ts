@@ -3,14 +3,30 @@ import { analyzeDocument, InvalidAiResponseError } from './analyze.ts';
 import { buildAllowedOrigins, corsHeaders } from './cors.ts';
 import { UpstreamError } from './gemini.ts';
 import { FixedWindowRateLimiter } from './rateLimit.ts';
+import { checkRateLimit, createPostgresStore, hashIp } from './sharedRateLimit.ts';
 
 const ALLOWED_ORIGINS = buildAllowedOrigins(Deno.env.get('DEV_ORIGINS'));
 const MAX_BODY_BYTES = 1_000_000;
 
 // Per visitor: 10 analyses per 10 minutes. For everyone together: 100 per hour, which keeps
 // the demo inside the Gemini free tier for the required 14 days.
-const perIpLimiter = new FixedWindowRateLimiter(10, 10 * 60_000);
-const globalLimiter = new FixedWindowRateLimiter(100, 60 * 60_000);
+const PER_IP_LIMIT = { limit: 10, windowSeconds: 10 * 60 };
+const GLOBAL_LIMIT = { limit: 100, windowSeconds: 60 * 60 };
+
+// Shared counters in Postgres; SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected into
+// every Edge Function by Supabase. The in-memory limiters are only the fallback.
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const rateLimitStore =
+  supabaseUrl && serviceRoleKey ? createPostgresStore(supabaseUrl, serviceRoleKey) : null;
+const perIpFallback = new FixedWindowRateLimiter(
+  PER_IP_LIMIT.limit,
+  PER_IP_LIMIT.windowSeconds * 1000,
+);
+const globalFallback = new FixedWindowRateLimiter(
+  GLOBAL_LIMIT.limit,
+  GLOBAL_LIMIT.windowSeconds * 1000,
+);
 
 const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   origin_not_allowed: 403,
@@ -61,11 +77,12 @@ Deno.serve(async (request) => {
     return errorResponse('method_not_allowed', cors);
   }
 
-  for (const [limiter, key] of [
-    [perIpLimiter, clientIp(request)],
-    [globalLimiter, 'global'],
-  ] as const) {
-    const limit = limiter.check(key);
+  const rules = [
+    { key: `ip:${await hashIp(clientIp(request))}`, ...PER_IP_LIMIT, fallback: perIpFallback },
+    { key: 'global', ...GLOBAL_LIMIT, fallback: globalFallback },
+  ];
+  for (const rule of rules) {
+    const limit = await checkRateLimit(rateLimitStore, rule);
     if (!limit.allowed) {
       return errorResponse('rate_limited', {
         ...cors,
