@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { AnalysisApiError, requestAnalysis } from './api/analyze.ts';
 import { ERROR_MESSAGES } from './api/errorMessages.ts';
 import { AiNotice } from './components/AiNotice.tsx';
+import { EmptyState } from './components/EmptyState.tsx';
 import { ErrorState } from './components/ErrorState.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
 import { ResultView } from './components/ResultView.tsx';
@@ -89,6 +90,7 @@ export function App() {
 
       <div aria-live="polite" className="status">
         {state.status === 'idle' && state.notice && <p>{state.notice}</p>}
+        {state.status === 'idle' && <EmptyState />}
         {state.status === 'extracting' && (
           <LoadingState message={`Odczytywanie tekstu z pliku ${state.fileName}…`} />
         )}
