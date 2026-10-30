@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { parseModelOutput } from './analyze.ts';
 import { buildUserMessage } from './prompt.ts';
 
-const request = { text: 'Umowa serwisowa.', fileName: 'umowa.pdf', pages: 4 };
+const request = {
+  text: 'Umowa serwisowa.',
+  fileName: 'umowa.pdf',
+  pages: 4,
+  pagesWithoutText: [] as number[],
+};
 
 const modelAnswer = {
   document: {
@@ -52,6 +57,16 @@ describe('buildUserMessage', () => {
   it('wraps the document in markers that use the random document ID', () => {
     const message = buildUserMessage(request, 'abc-123', null);
     expect(message).toContain('<document-abc-123>\nUmowa serwisowa.\n</document-abc-123>');
+  });
+
+  it('tells the model which pages could not be read', () => {
+    const message = buildUserMessage({ ...request, pagesWithoutText: [3] }, 'abc-123', null);
+    expect(message).toContain('pages 3 could not be read');
+    expect(message).toContain('do not describe the analysis as complete');
+  });
+
+  it('adds no page note when every page was readable', () => {
+    expect(buildUserMessage(request, 'abc-123', null)).not.toContain('could not be read');
   });
 
   it('adds the validation problems on the retry', () => {

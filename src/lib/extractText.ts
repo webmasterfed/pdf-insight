@@ -2,12 +2,15 @@
 // /pdf-insight/ base), so pdf.js can start its worker on GitHub Pages too.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// Fewer letters or digits than this means there is no usable text layer (scan or blank page).
-export const MIN_TEXT_CHARACTERS = 20;
+// A page with fewer letters or digits than this has no usable text layer (scan or blank page).
+export const MIN_PAGE_CHARACTERS = 20;
 
 export type ExtractedPdf = {
+  // Text of the readable pages only.
   text: string;
   pages: number;
+  // 1-based numbers of pages skipped because they have no text layer.
+  pagesWithoutText: number[];
 };
 
 export type PdfErrorCode = 'password' | 'invalid' | 'no-text-layer' | 'unknown';
@@ -33,6 +36,12 @@ export class PdfError extends Error {
 
 export function countMeaningfulCharacters(text: string): number {
   return text.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+}
+
+export function findPagesWithoutText(pageTexts: string[]): number[] {
+  return pageTexts.flatMap((pageText, index) =>
+    countMeaningfulCharacters(pageText) < MIN_PAGE_CHARACTERS ? [index + 1] : [],
+  );
 }
 
 function toPdfError(error: unknown): PdfError {
@@ -64,11 +73,15 @@ export async function extractPdfText(data: ArrayBuffer): Promise<ExtractedPdf> {
       pageTexts.push(pageText.trim());
     }
 
-    const text = pageTexts.join('\n\n').trim();
-    if (countMeaningfulCharacters(text) < MIN_TEXT_CHARACTERS) {
+    const pagesWithoutText = findPagesWithoutText(pageTexts);
+    if (pagesWithoutText.length === pdf.numPages) {
       throw new PdfError('no-text-layer');
     }
-    return { text, pages: pdf.numPages };
+    const text = pageTexts
+      .filter((_, index) => !pagesWithoutText.includes(index + 1))
+      .join('\n\n')
+      .trim();
+    return { text, pages: pdf.numPages, pagesWithoutText };
   } catch (error) {
     throw error instanceof PdfError ? error : toPdfError(error);
   } finally {

@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnalysisApiError, requestAnalysis } from './analyze.ts';
 
-const request = { text: 'Umowa serwisowa.', fileName: 'umowa.pdf', pages: 1 };
+const request = {
+  text: 'Umowa serwisowa.',
+  fileName: 'umowa.pdf',
+  pages: 1,
+  pagesWithoutText: [],
+};
 
 const validResult = {
   document: {

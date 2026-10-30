@@ -130,6 +130,15 @@ body {
   font-size: 0.9rem;
 }
 
+.warning {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--color-focus);
+  border-radius: 4px;
+  background: #fffbeb;
+  color: #713f12;
+  font-weight: 600;
+}
+
 .loading-state {
   display: flex;
   flex-wrap: wrap;

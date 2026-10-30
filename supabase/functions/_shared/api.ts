@@ -3,11 +3,18 @@ import { z } from 'zod';
 // About 75-100k tokens: far below the model's context window, large enough for long contracts.
 export const MAX_TEXT_CHARACTERS = 300_000;
 
-export const analyzeRequestSchema = z.object({
-  text: z.string().trim().min(1).max(MAX_TEXT_CHARACTERS),
-  fileName: z.string().trim().min(1).max(255),
-  pages: z.number().int().min(1).max(5000),
-});
+export const analyzeRequestSchema = z
+  .object({
+    text: z.string().trim().min(1).max(MAX_TEXT_CHARACTERS),
+    fileName: z.string().trim().min(1).max(255),
+    pages: z.number().int().min(1).max(5000),
+    // Pages skipped because they have no text layer; optional so older clients keep working.
+    pagesWithoutText: z.array(z.number().int().min(1)).max(5000).default([]),
+  })
+  .refine((request) => request.pagesWithoutText.every((page) => page <= request.pages), {
+    message: 'pagesWithoutText must be within the page count',
+    path: ['pagesWithoutText'],
+  });
 
 export type AnalyzeRequest = z.infer<typeof analyzeRequestSchema>;
 

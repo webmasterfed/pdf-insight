@@ -7,6 +7,7 @@ import { JsonPreview } from './components/JsonPreview.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
 import { UploadArea } from './components/UploadArea.tsx';
 import { extractPdfText, PdfError } from './lib/extractText.ts';
+import { formatPagesWithoutTextWarning } from './lib/pageWarning.ts';
 import { validateFile } from './lib/validateFile.ts';
 import type { AnalyzeRequest } from '../supabase/functions/_shared/api.ts';
 import type { AnalysisResult } from '../supabase/functions/_shared/schema.ts';
@@ -15,7 +16,7 @@ type AppState =
   | { status: 'idle'; notice: string | null }
   | { status: 'extracting'; fileName: string }
   | { status: 'analyzing'; fileName: string }
-  | { status: 'done'; result: AnalysisResult }
+  | { status: 'done'; result: AnalysisResult; pagesWithoutText: number[] }
   // "request" is kept when the text was already extracted, so a retry skips the PDF step.
   | { status: 'error'; message: string; request: AnalyzeRequest | null };
 
@@ -29,7 +30,7 @@ export function App() {
     setState({ status: 'analyzing', fileName: request.fileName });
     try {
       const result = await requestAnalysis(request, controller.signal);
-      setState({ status: 'done', result });
+      setState({ status: 'done', result, pagesWithoutText: request.pagesWithoutText });
     } catch (error) {
       if (controller.signal.aborted) {
         setState({ status: 'idle', notice: 'Analiza została anulowana.' });
@@ -52,8 +53,8 @@ export function App() {
     setState({ status: 'extracting', fileName: file.name });
     let request: AnalyzeRequest;
     try {
-      const { text, pages } = await extractPdfText(await file.arrayBuffer());
-      request = { text, fileName: file.name, pages };
+      const { text, pages, pagesWithoutText } = await extractPdfText(await file.arrayBuffer());
+      request = { text, fileName: file.name, pages, pagesWithoutText };
     } catch (error) {
       const message = error instanceof PdfError ? error.message : new PdfError('unknown').message;
       setState({ status: 'error', message, request: null });
@@ -64,6 +65,8 @@ export function App() {
 
   const isBusy = state.status === 'extracting' || state.status === 'analyzing';
   const retryRequest = state.status === 'error' ? state.request : null;
+  const pageWarning =
+    state.status === 'done' ? formatPagesWithoutTextWarning(state.pagesWithoutText) : null;
 
   return (
     <main className="container">
@@ -118,6 +121,7 @@ export function App() {
           >
             Nowy dokument
           </button>
+          {pageWarning && <p className="warning">{pageWarning}</p>}
           <JsonPreview result={state.result} />
         </>
       )}

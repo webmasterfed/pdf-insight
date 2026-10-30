@@ -32,9 +32,16 @@ export function buildUserMessage(
 ): string {
   const parts = [
     `Request metadata: fileName=${JSON.stringify(request.fileName)}, pages=${String(request.pages)}, document ID=${documentId}`,
+  ];
+  if (request.pagesWithoutText.length > 0) {
+    parts.push(
+      `Note: pages ${request.pagesWithoutText.join(', ')} could not be read (no text layer, probably scanned) and are not included below. Analyse only the text provided, do not guess what those pages contain, and do not describe the analysis as complete: mention in the summary that some pages could not be read.`,
+    );
+  }
+  parts.push(
     `<document-${documentId}>\n${request.text}\n</document-${documentId}>`,
     'Analyse the document above according to the rules and return only the JSON.',
-  ];
+  );
   if (previousProblems) {
     parts.push(
       `Your previous answer was rejected by validation (${previousProblems}). Return corrected JSON that follows the schema and rules exactly.`,
