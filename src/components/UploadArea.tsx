@@ -45,7 +45,19 @@ export function UploadArea({ onFileSelected, disabled }: UploadAreaProps) {
       }}
       onDrop={handleDrop}
     >
-      <p className="upload-area__title">Przeciągnij i upuść plik PDF tutaj</p>
+      <svg className="upload-area__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <p className="upload-area__title">
+        {isDragging ? 'Upuść plik, aby rozpocząć analizę' : 'Przeciągnij i upuść plik PDF tutaj'}
+      </p>
       <p className="upload-area__or">lub</p>
       {/* The real file input stays focusable for the keyboard; the label is its visible button. */}
       <input

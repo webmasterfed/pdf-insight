@@ -1,13 +1,17 @@
 type LoadingStateProps = {
-  message: string;
+  title: string;
+  detail: string;
   onCancel?: () => void;
 };
 
-export function LoadingState({ message, onCancel }: LoadingStateProps) {
+export function LoadingState({ title, detail, onCancel }: LoadingStateProps) {
   return (
     <div className="loading-state">
       <span className="spinner" aria-hidden="true" />
-      <p>{message}</p>
+      <div className="loading-state__text">
+        <p className="loading-state__title">{title}</p>
+        <p className="muted">{detail}</p>
+      </div>
       {onCancel && (
         <button type="button" className="button button--secondary" onClick={onCancel}>
           Anuluj

@@ -6,6 +6,8 @@ import { EmptyState } from './components/EmptyState.tsx';
 import { ErrorState } from './components/ErrorState.tsx';
 import { HistoryList } from './components/HistoryList.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
+import { PageFooter } from './components/PageFooter.tsx';
+import { PageHeader } from './components/PageHeader.tsx';
 import { ResultView } from './components/ResultView.tsx';
 import { UploadArea } from './components/UploadArea.tsx';
 import { extractPdfText, PdfError } from './lib/extractText.ts';
@@ -89,76 +91,76 @@ export function App() {
     state.status === 'done' ? formatPagesWithoutTextWarning(state.pagesWithoutText) : null;
 
   return (
-    <main className="container">
-      <header className="page-header">
-        <h1>PDF Insight</h1>
-        <p>Wgraj dokument PDF, a AI przygotuje streszczenie i dane w formacie JSON.</p>
-      </header>
+    <div className="container">
+      <PageHeader />
+      <main>
+        {state.status !== 'done' && (
+          <>
+            <UploadArea
+              disabled={isBusy}
+              onFileSelected={(file) => {
+                void handleFile(file);
+              }}
+            />
+            <AiNotice />
+          </>
+        )}
 
-      {state.status !== 'done' && (
-        <>
-          <UploadArea
-            disabled={isBusy}
-            onFileSelected={(file) => {
-              void handleFile(file);
+        <div aria-live="polite" className="status">
+          {state.status === 'idle' && state.notice && <p>{state.notice}</p>}
+          {state.status === 'idle' && <EmptyState />}
+          {state.status === 'extracting' && (
+            <LoadingState title="Odczytuję tekst z pliku…" detail={state.fileName} />
+          )}
+          {state.status === 'analyzing' && (
+            <LoadingState
+              title="Analizuję dokument…"
+              detail={`${state.fileName} · zwykle trwa to kilka sekund`}
+              onCancel={() => abortControllerRef.current?.abort()}
+            />
+          )}
+          {state.status === 'error' && (
+            <ErrorState
+              message={state.message}
+              onRetry={
+                retryRequest
+                  ? () => {
+                      void analyze(retryRequest);
+                    }
+                  : null
+              }
+            />
+          )}
+        </div>
+
+        {(state.status === 'idle' || state.status === 'error') && (
+          <HistoryList
+            entries={history}
+            onOpen={(entry) => {
+              setState({
+                status: 'done',
+                result: entry.result,
+                pagesWithoutText: entry.pagesWithoutText,
+              });
+            }}
+            onClear={() => {
+              clearHistory(storage);
+              setHistory([]);
             }}
           />
-          <AiNotice />
-        </>
-      )}
-
-      <div aria-live="polite" className="status">
-        {state.status === 'idle' && state.notice && <p>{state.notice}</p>}
-        {state.status === 'idle' && <EmptyState />}
-        {state.status === 'extracting' && (
-          <LoadingState message={`Odczytywanie tekstu z pliku ${state.fileName}…`} />
         )}
-        {state.status === 'analyzing' && (
-          <LoadingState
-            message={`Analiza dokumentu ${state.fileName} przez AI… To zwykle trwa kilka sekund.`}
-            onCancel={() => abortControllerRef.current?.abort()}
+
+        {state.status === 'done' && (
+          <ResultView
+            result={state.result}
+            warning={pageWarning}
+            onNewDocument={() => {
+              setState({ status: 'idle', notice: null });
+            }}
           />
         )}
-        {state.status === 'error' && (
-          <ErrorState
-            message={state.message}
-            onRetry={
-              retryRequest
-                ? () => {
-                    void analyze(retryRequest);
-                  }
-                : null
-            }
-          />
-        )}
-      </div>
-
-      {(state.status === 'idle' || state.status === 'error') && (
-        <HistoryList
-          entries={history}
-          onOpen={(entry) => {
-            setState({
-              status: 'done',
-              result: entry.result,
-              pagesWithoutText: entry.pagesWithoutText,
-            });
-          }}
-          onClear={() => {
-            clearHistory(storage);
-            setHistory([]);
-          }}
-        />
-      )}
-
-      {state.status === 'done' && (
-        <ResultView
-          result={state.result}
-          warning={pageWarning}
-          onNewDocument={() => {
-            setState({ status: 'idle', notice: null });
-          }}
-        />
-      )}
-    </main>
+      </main>
+      <PageFooter />
+    </div>
   );
 }
