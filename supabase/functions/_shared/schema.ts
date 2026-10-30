@@ -7,6 +7,7 @@ export const SUMMARY_MAX_SENTENCES = 5;
 export const KEY_POINTS_MAX = 7;
 export const KEYWORDS_MAX = 15;
 export const AMOUNTS_MAX = 20;
+export const DATES_MAX = 20;
 
 // Built once from the runtime's ICU data, e.g. PLN, EUR, USD.
 const ISO_4217_CODES = new Set(Intl.supportedValuesOf('currency'));
@@ -58,7 +59,7 @@ export const analysisResultSchema = z.looseObject({
     people: z.array(nonEmptyText),
   }),
   amounts: z.array(amountSchema).max(AMOUNTS_MAX),
-  dates: z.array(dateEntrySchema),
+  dates: z.array(dateEntrySchema).max(DATES_MAX),
   keywords: z.array(nonEmptyText).max(KEYWORDS_MAX),
 });
 

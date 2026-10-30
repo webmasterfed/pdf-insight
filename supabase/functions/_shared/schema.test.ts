@@ -116,6 +116,13 @@ describe('analysisResultSchema', () => {
     expect(parse({ ...validResult(), amounts: amounts(21) }).success).toBe(false);
   });
 
+  it('accepts 20 dates and rejects 21', () => {
+    const entry = { date: '2026-10-01', context: 'Termin płatności' };
+    const dates = (count: number) => Array.from({ length: count }, () => entry);
+    expect(parse({ ...validResult(), dates: dates(20) }).success).toBe(true);
+    expect(parse({ ...validResult(), dates: dates(21) }).success).toBe(false);
+  });
+
   it('rejects a non-numeric amount value', () => {
     const amounts = [{ value: '12 500,00', currency: 'PLN', context: 'wynagrodzenie' }];
     expect(parse({ ...validResult(), amounts }).success).toBe(false);

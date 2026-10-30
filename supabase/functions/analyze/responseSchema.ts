@@ -1,4 +1,10 @@
-import { AMOUNTS_MAX, DOCUMENT_TYPES, KEY_POINTS_MAX, KEYWORDS_MAX } from '../_shared/schema.ts';
+import {
+  AMOUNTS_MAX,
+  DATES_MAX,
+  DOCUMENT_TYPES,
+  KEY_POINTS_MAX,
+  KEYWORDS_MAX,
+} from '../_shared/schema.ts';
 
 // JSON Schema sent to Gemini's structured output mode. It steers the model towards the right
 // shape; the Zod schema is still the real check, because the model may ignore some keywords.
@@ -50,6 +56,7 @@ export const ANALYSIS_JSON_SCHEMA = {
         },
         required: ['date', 'context'],
       },
+      maxItems: DATES_MAX,
     },
     keywords: { ...stringList, maxItems: KEYWORDS_MAX },
   },
