@@ -7,6 +7,6 @@ export default defineConfig({
   base: '/pdf-insight/',
   plugins: [react()],
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'supabase/functions/**/*.test.ts'],
   },
 });

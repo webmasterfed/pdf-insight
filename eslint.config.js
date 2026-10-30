@@ -6,8 +6,9 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  // The Edge Function runs on Deno and is checked by Deno tooling, not by this config.
-  { ignores: ['dist', 'coverage', 'supabase'] },
+  // The Edge Function entry runs on Deno and is checked with `deno check`; the shared schema
+  // in supabase/functions/_shared is plain TypeScript used by both sides, so it is linted here.
+  { ignores: ['dist', 'coverage', 'supabase/functions/analyze', 'supabase/.temp'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.strictTypeChecked, prettier],
