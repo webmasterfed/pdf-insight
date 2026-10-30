@@ -74,10 +74,9 @@ Deno.serve(async (request) => {
     }
   }
 
-  // Content-Length can be missing or wrong, so the real body size is checked as well.
-  if (Number(request.headers.get('Content-Length') ?? 0) > MAX_BODY_BYTES) {
-    return errorResponse('payload_too_large', cors);
-  }
+  // The body is always read before answering: replying 413 while the upload is still unread
+  // makes the Supabase gateway return an empty 503 instead (found in the live size test).
+  // The real byte size is checked because Content-Length can be missing or wrong.
   const rawBody = await request.text();
   if (new TextEncoder().encode(rawBody).length > MAX_BODY_BYTES) {
     return errorResponse('payload_too_large', cors);
