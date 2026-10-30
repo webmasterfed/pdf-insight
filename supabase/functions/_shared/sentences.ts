@@ -1,6 +1,7 @@
-// Common abbreviations that end with a dot but do not end a sentence (Polish and English).
+// Common abbreviations that end with a dot and are usually followed by a capital letter or a
+// digit, so the capital-letter rule below alone would split on them (Polish and English).
+// "r." (rok) and "zł." are not listed: mid-sentence they are followed by a lowercase word.
 const ABBREVIATIONS = new Set([
-  'r',
   'ul',
   'nr',
   'np',
@@ -10,7 +11,6 @@ const ABBREVIATIONS = new Set([
   'ust',
   'art',
   'godz',
-  'zł',
   'al',
   'im',
   'św',
@@ -29,11 +29,19 @@ const ABBREVIATIONS = new Set([
   'e.g',
   'i.e',
   'm.in',
+  // Polish legal forms, e.g. "ACME sp. z o.o.", "Kwadrat S.A.", "Nowak s.c.".
+  'sp',
+  'o.o',
+  's.a',
+  's.c',
+  'sp.j',
+  'sp.k',
 ]);
 
 // A sentence boundary: ., ! or ? (possibly repeated or followed by a closing quote/bracket),
-// then whitespace. The word before the punctuation is captured to filter out abbreviations.
-const BOUNDARY = /(\S+?)[.!?]+["')\]»”]*\s+/g;
+// then whitespace and the start of a new sentence (capital letter, digit or opening quote).
+// The word before the punctuation is captured to filter out abbreviations.
+const BOUNDARY = /(\S+?)[.!?]+["')\]»”]*\s+(?=[\p{Lu}\p{N}"„«(])/gu;
 
 export function countSentences(text: string): number {
   const trimmed = text.trim();

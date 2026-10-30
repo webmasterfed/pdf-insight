@@ -20,6 +20,27 @@ describe('countSentences', () => {
     );
   });
 
+  it('does not split on Polish legal forms', () => {
+    expect(
+      countSentences(
+        'Umowę zawarli Nordwave Logistics sp. z o.o. oraz Kwadrat Software S.A. w Gdańsku.',
+      ),
+    ).toBe(1);
+    expect(
+      countSentences(
+        'Biuro Nowak s.c. świadczy usługi. Wykonawcą jest Kwadrat Software S.A. z Gdańska.',
+      ),
+    ).toBe(2);
+  });
+
+  it('counts a sentence that ends with "r." (rok) before a capital letter', () => {
+    expect(countSentences('Umowę zawarto 12.03.2026 r. Wynagrodzenie wynosi 100 zł.')).toBe(2);
+  });
+
+  it('does not split when the next word starts with a lowercase letter', () => {
+    expect(countSentences('Kwota wynosi ok. tysiąca złotych. Termin to maj.')).toBe(2);
+  });
+
   it('does not split on English abbreviations', () => {
     expect(countSentences('Costs, e.g. travel, are excluded. Payment is due in May.')).toBe(2);
   });

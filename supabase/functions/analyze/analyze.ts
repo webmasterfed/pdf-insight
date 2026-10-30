@@ -10,8 +10,9 @@ const MAX_ATTEMPTS = 2;
 export class InvalidAiResponseError extends Error {
   readonly code = 'ai_invalid_response';
 
-  constructor() {
-    super('The AI returned an invalid response twice');
+  // "problems" lists schema paths and Zod messages only, never document text, so it is safe to log.
+  constructor(problems: string) {
+    super(`The AI returned an invalid response twice: ${problems}`);
     this.name = 'InvalidAiResponseError';
   }
 }
@@ -71,5 +72,5 @@ export async function analyzeDocument(
     }
     previousProblems = outcome.problems;
   }
-  throw new InvalidAiResponseError();
+  throw new InvalidAiResponseError(previousProblems ?? 'unknown');
 }
