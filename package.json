@@ -12,7 +12,9 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "check-secrets": "node scripts/check-secrets.mjs",
-    "check-secrets:history": "node scripts/check-secrets.mjs --history"
+    "check-secrets:history": "node scripts/check-secrets.mjs --history",
+    "check:function": "deno check --config supabase/functions/analyze/deno.json supabase/functions/analyze/index.ts",
+    "deploy:function": "npx supabase@2.122.0 functions deploy analyze --project-ref xrmtrmaxgsesmsdujbbq --no-verify-jwt --use-api"
   },
   "dependencies": {
     "pdfjs-dist": "^6.4.299",
@@ -26,6 +28,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "deno": "^2.9.6",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -36,5 +39,8 @@
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
+  },
+  "allowScripts": {
+    "deno": false
   }
 }
