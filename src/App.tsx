@@ -3,8 +3,8 @@ import { AnalysisApiError, requestAnalysis } from './api/analyze.ts';
 import { ERROR_MESSAGES } from './api/errorMessages.ts';
 import { AiNotice } from './components/AiNotice.tsx';
 import { ErrorState } from './components/ErrorState.tsx';
-import { JsonPreview } from './components/JsonPreview.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
+import { ResultView } from './components/ResultView.tsx';
 import { UploadArea } from './components/UploadArea.tsx';
 import { extractPdfText, PdfError } from './lib/extractText.ts';
 import { formatPagesWithoutTextWarning } from './lib/pageWarning.ts';
@@ -70,8 +70,10 @@ export function App() {
 
   return (
     <main className="container">
-      <h1>PDF Insight</h1>
-      <p>Wgraj dokument PDF, a AI przygotuje streszczenie i dane w formacie JSON.</p>
+      <header className="page-header">
+        <h1>PDF Insight</h1>
+        <p>Wgraj dokument PDF, a AI przygotuje streszczenie i dane w formacie JSON.</p>
+      </header>
 
       {state.status !== 'done' && (
         <>
@@ -111,19 +113,13 @@ export function App() {
       </div>
 
       {state.status === 'done' && (
-        <>
-          <button
-            type="button"
-            className="button"
-            onClick={() => {
-              setState({ status: 'idle', notice: null });
-            }}
-          >
-            Nowy dokument
-          </button>
-          {pageWarning && <p className="warning">{pageWarning}</p>}
-          <JsonPreview result={state.result} />
-        </>
+        <ResultView
+          result={state.result}
+          warning={pageWarning}
+          onNewDocument={() => {
+            setState({ status: 'idle', notice: null });
+          }}
+        />
       )}
     </main>
   );
