@@ -23,8 +23,18 @@ describe('formatIsoDate', () => {
 });
 
 describe('formatAmount', () => {
-  it('formats an amount with its currency', () => {
-    expect(normalizeSpaces(formatAmount(12500, 'PLN'))).toBe('12 500,00 zł');
+  it('formats an amount with its ISO currency code', () => {
+    expect(normalizeSpaces(formatAmount(12500, 'PLN'))).toBe('12 500,00 PLN');
+    expect(normalizeSpaces(formatAmount(2150, 'EUR'))).toBe('2 150,00 EUR');
+    expect(normalizeSpaces(formatAmount(890, 'USD'))).toBe('890,00 USD');
+  });
+
+  it('groups thousands in 4-digit amounts too', () => {
+    expect(normalizeSpaces(formatAmount(9225, 'PLN'))).toBe('9 225,00 PLN');
+  });
+
+  it('always shows two decimal places', () => {
+    expect(normalizeSpaces(formatAmount(68080.5, 'PLN'))).toBe('68 080,50 PLN');
   });
 
   it('formats an amount without a currency as a plain number', () => {

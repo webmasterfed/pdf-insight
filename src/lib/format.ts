@@ -22,11 +22,23 @@ export function formatIsoDate(isoDate: string | null): string {
   return `${day ?? ''}.${month ?? ''}.${year ?? ''}`;
 }
 
+// Polish formatting skips the thousands separator for 4-digit numbers ("9225,00") unless
+// grouping is forced; the ISO code ("PLN", "EUR", "USD") is shown instead of mixed symbols.
 export function formatAmount(value: number, currency: string | null): string {
+  const options: Intl.NumberFormatOptions = {
+    useGrouping: 'always',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  };
   if (!currency) {
-    return new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2 }).format(value);
+    return new Intl.NumberFormat('pl-PL', options).format(value);
   }
-  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(value);
+  return new Intl.NumberFormat('pl-PL', {
+    ...options,
+    style: 'currency',
+    currency,
+    currencyDisplay: 'code',
+  }).format(value);
 }
 
 export function formatLanguage(code: string | null): string {
