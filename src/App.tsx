@@ -9,7 +9,7 @@ import { PageFooter } from './components/PageFooter.tsx';
 import { PageHeader } from './components/PageHeader.tsx';
 import { ResultView } from './components/ResultView.tsx';
 import { UploadArea } from './components/UploadArea.tsx';
-import { extractPdfText, PdfError } from './lib/extractText.ts';
+import { describeError, extractPdfText, PdfError } from './lib/extractText.ts';
 import { addToHistory, clearHistory, loadHistory, type HistoryEntry } from './lib/history.ts';
 import { formatPagesWithoutTextWarning } from './lib/pageWarning.ts';
 import { getBrowserStorage } from './lib/storage.ts';
@@ -23,7 +23,7 @@ type AppState =
   | { status: 'analyzing'; fileName: string; validating: boolean }
   | { status: 'done'; result: AnalysisResult; pagesWithoutText: number[] }
   // "request" is kept when the text was already extracted, so a retry skips the PDF step.
-  | { status: 'error'; message: string; request: AnalyzeRequest | null };
+  | { status: 'error'; message: string; details: string | null; request: AnalyzeRequest | null };
 
 const storage = getBrowserStorage();
 
@@ -55,7 +55,7 @@ export function App() {
         return;
       }
       const code = error instanceof AnalysisApiError ? error.code : 'internal_error';
-      setState({ status: 'error', message: ERROR_MESSAGES[code], request });
+      setState({ status: 'error', message: ERROR_MESSAGES[code], details: null, request });
     } finally {
       abortControllerRef.current = null;
     }
@@ -64,7 +64,7 @@ export function App() {
   async function handleFile(file: File) {
     const validation = await validateFile(file);
     if (!validation.ok) {
-      setState({ status: 'error', message: validation.message, request: null });
+      setState({ status: 'error', message: validation.message, details: null, request: null });
       return;
     }
 
@@ -74,8 +74,14 @@ export function App() {
       const { text, pages, pagesWithoutText } = await extractPdfText(await file.arrayBuffer());
       request = { text, fileName: file.name, pages, pagesWithoutText };
     } catch (error) {
-      const message = error instanceof PdfError ? error.message : new PdfError('unknown').message;
-      setState({ status: 'error', message, request: null });
+      const pdfError =
+        error instanceof PdfError ? error : new PdfError('unknown', describeError(error, null));
+      setState({
+        status: 'error',
+        message: pdfError.message,
+        details: pdfError.details,
+        request: null,
+      });
       return;
     }
     await analyze(request);
@@ -122,6 +128,7 @@ export function App() {
           {state.status === 'error' && (
             <ErrorState
               message={state.message}
+              details={state.details}
               onRetry={
                 retryRequest
                   ? () => {

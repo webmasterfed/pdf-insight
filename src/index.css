@@ -417,6 +417,21 @@ main {
   margin-bottom: 0;
 }
 
+.error-state__details {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.error-state__details summary {
+  cursor: pointer;
+}
+
+.error-state__details code {
+  display: block;
+  margin-top: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
 .warning {
   margin: 0;
   padding: var(--space-3) var(--space-4);

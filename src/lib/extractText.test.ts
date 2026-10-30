@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findPagesWithoutText } from './extractText.ts';
+import { describeError, findPagesWithoutText } from './extractText.ts';
 import { formatPagesWithoutTextWarning } from './pageWarning.ts';
 
 const readablePage = 'Umowa serwisowa zawarta w Warszawie pomiędzy stronami.';
@@ -38,5 +38,22 @@ describe('formatPagesWithoutTextWarning', () => {
     expect(formatPagesWithoutTextWarning([3, 11])).toMatch(
       /^Strony 3, 11 nie zawierają .* pominięte\./,
     );
+  });
+});
+
+describe('describeError', () => {
+  it('shows the error name, message and pdf.js version', () => {
+    expect(describeError(new TypeError('undefined is not a function'), '6.4.299')).toBe(
+      'TypeError: undefined is not a function · pdf.js 6.4.299',
+    );
+  });
+
+  it('truncates the message to 200 characters', () => {
+    const details = describeError(new Error('x'.repeat(500)), '6.4.299');
+    expect(details).toBe(`Error: ${'x'.repeat(200)} · pdf.js 6.4.299`);
+  });
+
+  it('handles values that are not Error objects and a pdf.js that did not load', () => {
+    expect(describeError('boom', null)).toBe('string: boom · pdf.js nie załadowano');
   });
 });

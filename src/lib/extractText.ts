@@ -27,12 +27,24 @@ const ERROR_MESSAGES: Record<PdfErrorCode, string> = {
 
 export class PdfError extends Error {
   readonly code: PdfErrorCode;
+  // Short technical description for unexpected errors (shown collapsed in the UI).
+  readonly details: string | null;
 
-  constructor(code: PdfErrorCode) {
+  constructor(code: PdfErrorCode, details: string | null = null) {
     super(ERROR_MESSAGES[code]);
     this.name = 'PdfError';
     this.code = code;
+    this.details = details;
   }
+}
+
+const MAX_DETAIL_MESSAGE_LENGTH = 200;
+
+// Error name and message (truncated) plus the pdf.js version; never a stack trace or file content.
+export function describeError(error: unknown, pdfjsVersion: string | null): string {
+  const name = error instanceof Error ? error.name : typeof error;
+  const message = error instanceof Error ? error.message : String(error);
+  return `${name}: ${message.slice(0, MAX_DETAIL_MESSAGE_LENGTH)} · pdf.js ${pdfjsVersion ?? 'nie załadowano'}`;
 }
 
 export function countMeaningfulCharacters(text: string): number {
@@ -45,19 +57,21 @@ export function findPagesWithoutText(pageTexts: string[]): number[] {
   );
 }
 
-function toPdfError(error: unknown): PdfError {
+function toPdfError(error: unknown, pdfjsVersion: string): PdfError {
   if (error instanceof Error && error.name === 'PasswordException') {
     return new PdfError('password');
   }
   if (error instanceof Error && error.name === 'InvalidPDFException') {
     return new PdfError('invalid');
   }
-  return new PdfError('unknown');
+  return new PdfError('unknown', describeError(error, pdfjsVersion));
 }
 
 export async function extractPdfText(data: ArrayBuffer): Promise<ExtractedPdf> {
   // Loaded on demand so the first page load stays small.
-  const pdfjs = await import('pdfjs-dist');
+  const pdfjs = await import('pdfjs-dist').catch((error: unknown) => {
+    throw new PdfError('unknown', describeError(error, null));
+  });
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
   const loadingTask = pdfjs.getDocument({ data });
@@ -80,7 +94,7 @@ export async function extractPdfText(data: ArrayBuffer): Promise<ExtractedPdf> {
       .trim();
     return { text, pages: pdf.numPages, pagesWithoutText };
   } catch (error) {
-    throw error instanceof PdfError ? error : toPdfError(error);
+    throw error instanceof PdfError ? error : toPdfError(error, pdfjs.version);
   } finally {
     // Frees the document and its worker, whether loading succeeded or failed.
     await loadingTask.destroy();
