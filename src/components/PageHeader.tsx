@@ -1,3 +1,5 @@
+import { ThemeSwitch } from './ThemeSwitch.tsx';
+
 export function PageHeader() {
   return (
     <header className="page-header">
@@ -13,6 +15,7 @@ export function PageHeader() {
           />
         </svg>
         <h1>PDF Insight</h1>
+        <ThemeSwitch />
       </div>
       <p className="page-header__lead">
         Wgraj PDF i w kilka sekund otrzymaj streszczenie oraz dane w formacie JSON.

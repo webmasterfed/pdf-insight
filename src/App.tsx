@@ -10,14 +10,9 @@ import { PageHeader } from './components/PageHeader.tsx';
 import { ResultView } from './components/ResultView.tsx';
 import { UploadArea } from './components/UploadArea.tsx';
 import { extractPdfText, PdfError } from './lib/extractText.ts';
-import {
-  addToHistory,
-  clearHistory,
-  getBrowserStorage,
-  loadHistory,
-  type HistoryEntry,
-} from './lib/history.ts';
+import { addToHistory, clearHistory, loadHistory, type HistoryEntry } from './lib/history.ts';
 import { formatPagesWithoutTextWarning } from './lib/pageWarning.ts';
+import { getBrowserStorage } from './lib/storage.ts';
 import { validateFile } from './lib/validateFile.ts';
 import type { AnalyzeRequest } from '../supabase/functions/_shared/api.ts';
 import type { AnalysisResult } from '../supabase/functions/_shared/schema.ts';

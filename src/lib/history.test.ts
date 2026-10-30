@@ -7,10 +7,10 @@ import {
   HISTORY_MAX,
   loadHistory,
   type HistoryEntry,
-  type HistoryStorage,
 } from './history.ts';
+import type { KeyValueStorage } from './storage.ts';
 
-function memoryStorage(initial: Record<string, string> = {}): HistoryStorage {
+function memoryStorage(initial: Record<string, string> = {}): KeyValueStorage {
   const data = new Map(Object.entries(initial));
   return {
     getItem: (key) => data.get(key) ?? null,
@@ -71,7 +71,7 @@ describe('history', () => {
   });
 
   it('still returns the new list when saving throws (e.g. storage full)', () => {
-    const full: HistoryStorage = {
+    const full: KeyValueStorage = {
       ...memoryStorage(),
       setItem: () => {
         throw new Error('QuotaExceededError');

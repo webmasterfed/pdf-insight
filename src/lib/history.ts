@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { analysisResultSchema } from '../../supabase/functions/_shared/schema.ts';
+import type { KeyValueStorage } from './storage.ts';
 
 export const HISTORY_KEY = 'pdf-insight:history:v1';
 export const HISTORY_MAX = 5;
@@ -13,20 +14,8 @@ const historyEntrySchema = z.object({
 
 export type HistoryEntry = z.infer<typeof historyEntrySchema>;
 
-// Only the three methods we use, so tests can pass a simple in-memory fake.
-export type HistoryStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
-
-// Even reading window.localStorage can throw (blocked cookies, some private modes).
-export function getBrowserStorage(): HistoryStorage | null {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 // Stored data is untrusted (older app versions, manual edits): invalid entries are dropped.
-export function loadHistory(storage: HistoryStorage | null): HistoryEntry[] {
+export function loadHistory(storage: KeyValueStorage | null): HistoryEntry[] {
   if (!storage) {
     return [];
   }
@@ -46,7 +35,7 @@ export function loadHistory(storage: HistoryStorage | null): HistoryEntry[] {
 
 // Returns the new list even when saving fails (e.g. storage full), so the UI stays consistent.
 export function addToHistory(
-  storage: HistoryStorage | null,
+  storage: KeyValueStorage | null,
   current: HistoryEntry[],
   entry: HistoryEntry,
 ): HistoryEntry[] {
@@ -59,7 +48,7 @@ export function addToHistory(
   return updated;
 }
 
-export function clearHistory(storage: HistoryStorage | null): void {
+export function clearHistory(storage: KeyValueStorage | null): void {
   try {
     storage?.removeItem(HISTORY_KEY);
   } catch {

@@ -147,8 +147,39 @@ main {
 
 .brand {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* Theme switch: three native radio buttons styled as one segmented control. */
+.theme-switch {
+  display: inline-flex;
+  margin: 0 0 0 auto;
+  padding: 2px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+
+.theme-switch__option span {
+  display: block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.theme-switch__option input:checked + span {
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.theme-switch__option input:focus-visible + span {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
 }
 
 .brand__logo {
