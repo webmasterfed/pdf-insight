@@ -15,14 +15,8 @@ export function PageHeader() {
         <h1>PDF Insight</h1>
       </div>
       <p className="page-header__lead">
-        Wgraj dokument PDF, a AI przygotuje streszczenie, najważniejsze informacje i dane w formacie
-        JSON do pobrania.
+        Wgraj PDF i w kilka sekund otrzymaj streszczenie oraz dane w formacie JSON.
       </p>
-      <ol className="steps" aria-label="Jak to działa">
-        <li>Wgraj PDF</li>
-        <li>AI analizuje tekst</li>
-        <li>Przejrzyj i pobierz JSON</li>
-      </ol>
     </header>
   );
 }

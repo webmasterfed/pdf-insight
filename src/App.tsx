@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { AnalysisApiError, requestAnalysis } from './api/analyze.ts';
 import { ERROR_MESSAGES } from './api/errorMessages.ts';
 import { AiNotice } from './components/AiNotice.tsx';
-import { EmptyState } from './components/EmptyState.tsx';
 import { ErrorState } from './components/ErrorState.tsx';
 import { HistoryList } from './components/HistoryList.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
@@ -26,7 +25,7 @@ import type { AnalysisResult } from '../supabase/functions/_shared/schema.ts';
 type AppState =
   | { status: 'idle'; notice: string | null }
   | { status: 'extracting'; fileName: string }
-  | { status: 'analyzing'; fileName: string }
+  | { status: 'analyzing'; fileName: string; validating: boolean }
   | { status: 'done'; result: AnalysisResult; pagesWithoutText: number[] }
   // "request" is kept when the text was already extracted, so a retry skips the PDF step.
   | { status: 'error'; message: string; request: AnalyzeRequest | null };
@@ -41,9 +40,11 @@ export function App() {
   async function analyze(request: AnalyzeRequest) {
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    setState({ status: 'analyzing', fileName: request.fileName });
+    setState({ status: 'analyzing', fileName: request.fileName, validating: false });
     try {
-      const result = await requestAnalysis(request, controller.signal);
+      const result = await requestAnalysis(request, controller.signal, () => {
+        setState({ status: 'analyzing', fileName: request.fileName, validating: true });
+      });
       setState({ status: 'done', result, pagesWithoutText: request.pagesWithoutText });
       setHistory(
         addToHistory(storage, history, {
@@ -108,12 +109,16 @@ export function App() {
 
         <div aria-live="polite" className="status">
           {state.status === 'idle' && state.notice && <p>{state.notice}</p>}
-          {state.status === 'idle' && <EmptyState />}
           {state.status === 'extracting' && (
-            <LoadingState title="Odczytuję tekst z pliku…" detail={state.fileName} />
+            <LoadingState
+              stage="extracting"
+              title="Odczytuję tekst z pliku…"
+              detail={state.fileName}
+            />
           )}
           {state.status === 'analyzing' && (
             <LoadingState
+              stage={state.validating ? 'validating' : 'analyzing'}
               title="Analizuję dokument…"
               detail={`${state.fileName} · zwykle trwa to kilka sekund`}
               onCancel={() => abortControllerRef.current?.abort()}

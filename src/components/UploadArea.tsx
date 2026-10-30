@@ -73,7 +73,8 @@ export function UploadArea({ onFileSelected, disabled }: UploadAreaProps) {
         Wybierz plik z dysku
       </label>
       <p id={hintId} className="upload-area__hint">
-        Tylko pliki PDF z warstwą tekstową, maksymalnie 10 MB.
+        PDF z warstwą tekstową, maksymalnie 10 MB. Po kilku sekundach zobaczysz streszczenie,
+        najważniejsze informacje i dane JSON do pobrania.
       </p>
     </div>
   );

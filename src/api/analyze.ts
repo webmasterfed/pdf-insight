@@ -23,9 +23,11 @@ export class AnalysisApiError extends Error {
 }
 
 // Throws AnalysisApiError for every failure, or the AbortError when the user cancels.
+// onValidating is called when a successful response has arrived and is about to be validated.
 export async function requestAnalysis(
   request: AnalyzeRequest,
   cancelSignal: AbortSignal,
+  onValidating?: () => void,
 ): Promise<AnalysisResult> {
   const apiUrl = import.meta.env.VITE_API_URL;
   if (!apiUrl) {
@@ -64,6 +66,7 @@ export async function requestAnalysis(
   }
 
   // The response is validated again in the browser BEFORE anything is displayed.
+  onValidating?.();
   const result = analysisResultSchema.safeParse(body);
   if (!result.success) {
     throw new AnalysisApiError('invalid_response');

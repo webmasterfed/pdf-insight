@@ -21,7 +21,7 @@ export function HistoryList({ entries, onOpen, onClear }: HistoryListProps) {
     <section className="history" aria-labelledby="history-title">
       <div className="history__header">
         <h2 id="history-title">Ostatnie analizy</h2>
-        <button type="button" className="button button--secondary button--small" onClick={onClear}>
+        <button type="button" className="text-button" onClick={onClear}>
           Wyczyść historię
         </button>
       </div>
@@ -35,7 +35,7 @@ export function HistoryList({ entries, onOpen, onClear }: HistoryListProps) {
             <span className="muted history__date">{formatSavedAt(entry.savedAt)}</span>
             <button
               type="button"
-              className="button button--small"
+              className="button button--secondary button--small"
               onClick={() => {
                 onOpen(entry);
               }}

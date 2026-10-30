@@ -1,10 +1,13 @@
+import { ProgressSteps, type AnalysisStage } from './ProgressSteps.tsx';
+
 type LoadingStateProps = {
+  stage: AnalysisStage;
   title: string;
   detail: string;
   onCancel?: () => void;
 };
 
-export function LoadingState({ title, detail, onCancel }: LoadingStateProps) {
+export function LoadingState({ stage, title, detail, onCancel }: LoadingStateProps) {
   return (
     <div className="loading-state">
       <span className="spinner" aria-hidden="true" />
@@ -17,6 +20,7 @@ export function LoadingState({ title, detail, onCancel }: LoadingStateProps) {
           Anuluj
         </button>
       )}
+      <ProgressSteps current={stage} />
     </div>
   );
 }
